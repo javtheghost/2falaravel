@@ -30,37 +30,41 @@ class SmsController extends Controller
      * genera y envía un código de verificación por SMS.
      */
     public function store(Request $request)
-    {
-        // Laravel lanza automáticamente ValidationException si falla la validación
-        $request->validate([
-            'phone_number' => ['required', 'numeric'],
-        ]);
+{
+    $request->validate([
+        'phone_number' => ['required', 'numeric', 'digits_between:10,15'],
+    ]);
 
-        $rawCode = mt_rand(100000, 999999);
-        $code = password_hash($rawCode, PASSWORD_DEFAULT);
+    $user = User::where('email', $request->input('email'))->firstOrFail();
 
-        $user = User::where('email', $request->input('email'))->firstOrFail();
+    // Invalida códigos anteriores
+    $user->update([
+        'codem' => null,
+        'codem_expires_at' => null,
+    ]);
 
-        Log::info('Correo electrónico: ' . $request->input('email'));
+    // Generar código seguro
+    $rawCode = random_int(100000, 999999);
+    $code = bcrypt($rawCode);
 
-        $phoneNumber = $request->input('phone_number');
-        $phoneNumberWithCountryCode = '+52' . ltrim($phoneNumber, '+');
+    $phoneNumber = $request->input('phone_number');
+    $phoneNumberWithCountryCode = '+52' . ltrim($phoneNumber, '+');
 
-        $user->update([
-            'codem' => $code,
-            'codem_expires_at' => now()->addMinutes(3), // Expira en 3 minutos
-            'failed_attempts' => 0, // Reiniciar intentos fallidos
-            'phone_number' => $phoneNumberWithCountryCode,
-        ]);
+    $user->update([
+        'codem' => $code,
+        'codem_expires_at' => now()->addMinutes(3),
+        'failed_attempts' => 0,
+        'phone_number' => $phoneNumberWithCountryCode,
+    ]);
 
-        Log::info("Código de verificación generado para {$user->email}");
-        Log::info("Número de teléfono actualizado: $phoneNumberWithCountryCode");
+    // Log seguro (sin datos sensibles)
+    Log::info("Código generado para usuario ID: {$user->id}");
 
-        // Enviar SMS (si hay un error, Laravel lo propagará)
-        $this->sendSms($phoneNumberWithCountryCode, "Su código de verificación: $rawCode");
+    // Enviar SMS
+    $this->sendSms($phoneNumberWithCountryCode, "Su código de verificación: $rawCode");
 
-        return redirect()->route('auth.verification', ['email' => $user->email]);
-    }
+    return redirect()->route('auth.verification', ['email' => $user->email]);
+}
 
     /**
      * Envía un mensaje de texto (SMS) con el código de

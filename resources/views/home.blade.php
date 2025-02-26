@@ -2,7 +2,6 @@
 
 @section('title','Home' )
 
-
 @section('content')
 <h1>Hola mundo</h1>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

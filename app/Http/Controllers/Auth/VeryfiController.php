@@ -71,7 +71,7 @@ class VeryfiController extends Controller
     
         // Si el código es correcto, limpiar datos
         $user->update([
-            'codem' => null,
+            'codem' => '',
             'codem_expires_at' => null,
             'failed_attempts' => 0,
         ]);

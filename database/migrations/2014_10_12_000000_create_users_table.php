@@ -24,7 +24,8 @@ return new class extends Migration
 
             $table->timestamp('codem_expires_at')->nullable();
             $table->integer('failed_attempts')->default(0);
-            $table->string('codem')->default(0);
+            $table->string('codem')->nullable();
+
             $table->boolean('phone_verified')->default(false);
             $table->string('api_token')->unique()->nullable()->default(null);
             $table->rememberToken();

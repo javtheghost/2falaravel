@@ -12,7 +12,7 @@
         <input type="hidden" name="email" value="{{ $email }}">
 
         <input type="tel" class="border border-gray-200 rounded-md bg-gray-200 w-full
-        text-lg placeholder-gray-900 p-2 my-2 focus:bg-white" placeholder="Imgrese el codigo de confirmacion"
+        text-lg placeholder-gray-900 p-2 my-2 focus:bg-white" placeholder="Ingrese el codigo de confirmacion"
         id="verification_code" name="verification_code">
 
         @error('verification_code')
