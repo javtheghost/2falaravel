@@ -29,7 +29,21 @@ class User extends Authenticatable
 
 
     ];
+    // Método para verificar si el código ha expirado
+    public function hasExpiredCode()
+    {
+        return $this->codem_expires_at && now()->gt($this->codem_expires_at);
+    }
 
+
+    // Método para invalidar el código
+    public function invalidateCode()
+    {
+        $this->update([
+            'codem' => null,
+            'codem_expires_at' => null
+        ]);
+    }
     /**
      * The attributes that should be hidden for serialization.
      *

@@ -37,6 +37,8 @@ Route::middleware('guest')->group(function () {
     
     Route::get('/verification', [VeryfiController::class, 'create'])->name('auth.verification');
     Route::post('/verification', [VeryfiController::class, 'store'])->name('auth.storeve');
+
+    Route::post('/resend-code', [SmsController::class, 'resendCode'])->name('auth.resend');
 });
 
 
