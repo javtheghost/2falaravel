@@ -45,6 +45,8 @@ class RegisterController extends Controller
              'password' => Hash::make($validatedData['password']),
              'verification_token' => $hashedToken,
              'verification_token_expires_at' => now()->addHours(24),
+             'phone_number' => '+52' . ltrim($validatedData['phone_number'], '+'),
+
          ]);
  
       
@@ -68,6 +70,7 @@ class RegisterController extends Controller
                      'regex:/^(?=.*[0-9])(?=.*[^a-zA-Z0-9])/',
                  ],
                  'g-recaptcha-response' => 'required|captcha',
+                 'phone_number' => 'required|string|digits_between:10,15',
              ],
              [
                  'g-recaptcha-response.required' => 'Por favor, completa el campo reCAPTCHA.',

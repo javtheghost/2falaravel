@@ -44,14 +44,25 @@
       w-full text-lg placeholder-gray-900 p-2 my-2 focus:bg-white"
       placeholder="Confirmar Contraseña" id="password_confirmation"
       name="password_confirmation">
-
+      <div class="mt-4">
+        <input type="tel" 
+               class="border border-gray-200 rounded-md bg-gray-200 w-full text-lg placeholder-gray-900 p-2 my-2 focus:bg-white" 
+               placeholder="Número telefónico"
+               id="phone_number" 
+               name="phone_number"
+               required
+               pattern="[0-9]{10}">
+        @error('phone_number')
+            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+        @enderror
+    </div>
       <div class="form-group mt-3 flex justify-center">
         {!! NoCaptcha::renderJs('es', false, 'onLoadCallback') !!}
         <div class="overflow-hidden w-full flex justify-center">
           {!! NoCaptcha::display() !!}
         </div>
       </div>
-
+    
       @if($errors->has('g-recaptcha-response'))
       <p class="border border-red-500 rounded-md bg-red-100 w-full
           text-red-600 p-2 my-2">
