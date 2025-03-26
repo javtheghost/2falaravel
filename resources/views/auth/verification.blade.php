@@ -1,4 +1,4 @@
-pero en mi codigo @extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Verificación')
 
