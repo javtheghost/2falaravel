@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
 {
@@ -31,25 +33,28 @@ class RegisterController extends Controller
 
      public function register()
      {
-         // Validar los datos
          $validatedData = $this->validateUserData();
-
-         // Crear el usuario
+ 
+         // Generar token seguro (40 caracteres) y su hash
+         $verificationToken = bin2hex(random_bytes(20));
+         $hashedToken = Hash::make($verificationToken);
+ 
          $user = User::create([
              'name' => $validatedData['name'],
              'email' => $validatedData['email'],
-             'password' => bcrypt($validatedData['password']),
+             'password' => Hash::make($validatedData['password']),
+             'verification_token' => $hashedToken,
+             'verification_token_expires_at' => now()->addHours(24),
          ]);
-
-         // Registrar en el log
+ 
+      
          Log::info("Usuario registrado exitosamente: {$user->email}");
-
-         // Redirigir al formulario de login con un mensaje de éxito
+ 
          return redirect()
              ->route('login.index')
              ->with('success', 'Registro exitoso. Por favor, inicia sesión.');
      }
-
+ 
      private function validateUserData()
      {
          return request()->validate(
@@ -71,7 +76,5 @@ class RegisterController extends Controller
              ]
          );
      }
-
-
 
 }
