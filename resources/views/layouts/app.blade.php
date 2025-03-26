@@ -47,7 +47,9 @@
 
     </nav>
     @yield('content')
-
+<footer class="bg-gray-800 text-white text-center py-4 text-lg font-semibold">
+        Servidor actual: 2
+    </footer>
 
   </body>
 </html>
