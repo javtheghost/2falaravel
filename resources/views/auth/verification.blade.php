@@ -9,7 +9,7 @@
             <h1 class="text-2xl font-bold text-gray-800">Verifica tu identidad</h1>
             <p class="text-gray-600 mt-2">Hemos enviado un mensaje de texto a:</p>
             <div class="mt-4 p-4 bg-blue-50 rounded-lg">
-                <p class="font-medium text-gray-700">Teléfono terminado en <span class="font-bold">{{ $phone_last_digits ?? '****' }}</span></p>
+                <p class="font-medium text-gray-700">Teléfono terminado en <span class="font-bold">{{ $phone_last_digits ? substr($phone_last_digits, -2) : '****' }}</span></p>
             </div>
         </div>
 
@@ -33,6 +33,7 @@
             <input type="hidden" name="email" value="{{ $email }}">
             <input type="hidden" id="remaining_time" value="{{ $remaining_time ?? 0 }}">
             <input type="hidden" id="is_blocked" value="{{ $is_blocked ? 'true' : 'false' }}">
+            <input type="hidden" name="secure_token" value="{{ encrypt(time()) }}">
 
             <div class="mb-6">
                 <label for="verification_code" class="block text-sm font-medium text-gray-700 mb-2">
@@ -47,8 +48,6 @@
                 @error('verification_code')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
-
-         
             </div>
 
             <button type="submit" id="submit-btn" class="w-full py-3 px-4 {{ $is_blocked ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700' }} text-white font-medium rounded-md transition duration-200" 
@@ -62,6 +61,7 @@
                 <form method="POST" action="{{ route('auth.resend') }}" id="resend-form">
                     @csrf
                     <input type="hidden" name="email" value="{{ $email }}">
+                    <input type="hidden" name="secure_token" value="{{ encrypt(time()) }}">
                     <button type="submit" id="resend-btn" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         Reenviar código
                     </button>
@@ -111,7 +111,7 @@
 
     // Iniciar el contador
     function startCountdown() {
-        let timeLeft = parseInt(document.getElementById('remaining_time').value);
+        let timeLeft = parseInt(document.getElementById('remaining_time').value) || 0;
         const isBlocked = document.getElementById('is_blocked').value === 'true';
         
         // Actualizar inmediatamente
@@ -133,10 +133,11 @@
 
     // Validación del código en tiempo real
     function validateCode(input) {
-        const code = input.value;
+        // Solo permite números y limita a 6 dígitos
+        input.value = input.value.replace(/\D/g, '').substring(0, 6);
         const submitBtn = document.getElementById('submit-btn');
         const isBlocked = document.getElementById('is_blocked').value === 'true';
-        submitBtn.disabled = code.length !== 6 || isBlocked;
+        submitBtn.disabled = input.value.length !== 6 || isBlocked;
     }
 
     // Manejar el reenvío de código
@@ -153,12 +154,12 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
-                    email: this.querySelector('input[name="email"]').value
+                    email: this.querySelector('input[name="email"]').value,
+                    secure_token: this.querySelector('input[name="secure_token"]').value
                 })
             });
             

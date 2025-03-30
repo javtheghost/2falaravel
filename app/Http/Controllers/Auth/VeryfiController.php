@@ -30,7 +30,7 @@ class VeryfiController extends Controller
 
         return view('auth.verification', [
             'email' => $user->email,
-            'phone_last_digits' => substr($user->phone_number, -4),
+            'phone_last_digits' => substr($user->phone_number, -2),
             'remaining_time' => $remainingTime,
             'is_blocked' => $isBlocked,
             'unlock_time' => $isBlocked ? $expiresAt->format('H:i:s') : null,
