@@ -32,6 +32,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Trial Mode Configuration
+    |--------------------------------------------------------------------------
+    |
+    | These values are used to enable/disable trial mode restrictions
+    | and specify allowed phone numbers during trial period.
+    |
+    */
+    'trial_mode' => env('APP_TRIAL_MODE', false),
+    'twilio_trial_numbers' => array_map('trim', explode(',', env('TWILIO_TRIAL_NUMBERS', ''))),
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |
