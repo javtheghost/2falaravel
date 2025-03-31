@@ -37,7 +37,7 @@ class LoginController extends Controller
             Log::info('Usuario validado: ' . $user->email);
     
             // Verificar si el código aún es válido
-            if ($user->code_expires_at && now()->lt($user->code_expires_at)) {
+            if ($user->codem_expires_at && now()->lt($user->codem_expires_at)) {
                 return back()->withErrors(['sms' => 'Ya has solicitado un código SMS recientemente. Inténtalo más tarde.']);
             }
     
@@ -66,19 +66,24 @@ class LoginController extends Controller
         }
     }
     
-
     private function validateLoginRequest(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-            'g-recaptcha-response' => 'required|captcha',
+            'email' => 'required|email|exists:users,email', 
+            'password' => 'required|string|min:8|regex:/^(?=.*[0-9])(?=.*[^a-zA-Z0-9])/', // Contraseña con mínimo 8 caracteres, un número y un carácter especial
+            'g-recaptcha-response' => 'required|captcha', 
         ], [
-            'g-recaptcha-response.required' => 'Completa el reCAPTCHA',
-            'g-recaptcha-response.captcha' => 'reCAPTCHA inválido',
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'El formato del correo electrónico no es válido.',
+            'email.exists' => 'El correo electrónico no está registrado.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.regex' => 'La contraseña debe contener al menos un número y un carácter especial.',
+            'g-recaptcha-response.required' => 'Por favor, completa el reCAPTCHA.',
+            'g-recaptcha-response.captcha' => 'El reCAPTCHA no es válido. Por favor, inténtalo de nuevo.',
         ]);
     }
-
+    
     private function getUserByEmail($email)
     {
         return User::where('email', $email)->first();
