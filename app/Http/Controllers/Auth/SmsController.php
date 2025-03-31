@@ -58,49 +58,40 @@ class SmsController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email'
         ]);
-
+    
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Datos de entrada inválidos'
-            ], 400);
+            return redirect()->back()->with('error', 'Datos de entrada inválidos');
         }
-
+    
         try {
             $user = User::where('email', $request->email)->firstOrFail();
-
+    
             // Verificar si el código anterior ya expiró
             if ($user->codem_expires_at && now()->lt($user->codem_expires_at)) {
                 $remainingTime = now()->diffInSeconds($user->codem_expires_at);
                 
                 // No permitir reenvío si aún no expira el código anterior
                 if ($remainingTime > 60) { // 1 minuto de gracia
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Debes esperar a que expire el código actual',
+                    return redirect()->back()->with([
+                        'error' => 'Debes esperar a que expire el código actual',
                         'remaining_time' => $remainingTime
-                    ], 429);
+                    ]);
                 }
             }
-
+    
             // Enviar nuevo código
             if ($this->sendVerificationCode($user)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Código reenviado exitosamente'
-                ]);
+                return redirect()->back()->with('success', 'Nuevo código enviado exitosamente.');
             }
-
+    
             throw new \Exception('Error al generar el código');
-
+    
         } catch (\Exception $e) {
             Log::error("Error reenviando código: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al reenviar el código'
-            ], 500);
+            return redirect()->back()->with('error', 'Error al reenviar el código');
         }
     }
+    
 
     /**
      * Envía un mensaje SMS usando Twilio

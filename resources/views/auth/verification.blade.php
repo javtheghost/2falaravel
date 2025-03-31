@@ -13,21 +13,26 @@
             </div>
         </div>
 
-        @if($is_blocked)
+        {{-- Mostrar mensajes de error o éxito --}}
+        @if(session('error'))
         <div class="bg-red-50 p-4 rounded-lg mb-4">
             <p class="text-red-600 font-medium">
                 <i class="fas fa-lock mr-2"></i>
-                Bloqueado por seguridad. Disponible en <span class="block-message-time">{{ floor($remaining_time/60) }}:{{ str_pad($remaining_time%60, 2, '0', STR_PAD_LEFT) }}</span>
+                {{ session('error') }}
             </p>
-            @if(isset($unlock_time))
-            <div class="mt-2 flex items-center text-sm text-gray-600">
-                <i class="fas fa-clock mr-2"></i>
-                <span>Se desbloqueará a las <span id="unlock-time">{{ $unlock_time }}</span></span>
-            </div>
-            @endif
         </div>
         @endif
 
+        @if(session('success'))
+        <div class="bg-green-50 p-4 rounded-lg mb-4">
+            <p class="text-green-600 font-medium">
+                <i class="fas fa-check-circle mr-2"></i>
+                {{ session('success') }}
+            </p>
+        </div>
+        @endif
+
+     
         <form method="POST" action="{{ route('auth.storeve') }}" id="verification-form">
             @csrf
             <input type="hidden" name="email" value="{{ $email }}">
@@ -69,9 +74,12 @@
             @else
                 <p class="text-sm text-gray-500">
                     Podrás reenviar el código en: <span id="resend-countdown">{{ floor($remaining_time/60) }}:{{ str_pad($remaining_time%60, 2, '0', STR_PAD_LEFT) }}</span>
+                    @if(isset($unlock_time))
+                        (a las {{ $unlock_time }})
+                    @endif
                 </p>
             @endif
-            <div id="resend-feedback" class="mt-2"></div>
+            <div id="resend-feedback" class="mt-2 text-sm"></div>
         </div>
 
         <div class="mt-8 pt-6 border-t border-gray-200 text-center">
@@ -81,8 +89,6 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
 <script>
     // Función para formatear el tiempo (MM:SS)
     function formatTime(totalSeconds) {
@@ -91,95 +97,20 @@
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    // Función para actualizar todos los contadores
-    function updateAllCounters(seconds) {
-        const formattedTime = formatTime(seconds);
-        
-        // Actualizar todos los elementos del contador
-        const countdownElements = [
-            document.getElementById('countdown'),
-            document.getElementById('resend-countdown'),
-            document.querySelector('.block-message-time')
-        ];
-        
-        countdownElements.forEach(element => {
-            if (element) {
-                element.textContent = formattedTime;
-            }
-        });
-    }
+    let remainingTime = document.getElementById('remaining_time').value;
+    let countdownDisplay = document.getElementById('resend-countdown');
 
-    // Iniciar el contador
-    function startCountdown() {
-        let timeLeft = parseInt(document.getElementById('remaining_time').value) || 0;
-        const isBlocked = document.getElementById('is_blocked').value === 'true';
-        
-        // Actualizar inmediatamente
-        if (timeLeft > 0) {
-            updateAllCounters(timeLeft);
-            
-            const countdownInterval = setInterval(() => {
-                timeLeft--;
-                updateAllCounters(timeLeft);
-                
-                if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    // Recargar después de 1 segundo para actualizar el estado
-                    setTimeout(() => window.location.reload(), 1000);
-                }
-            }, 1000);
+    if (remainingTime > 0) {
+    let countdownTimer = setInterval(() => {
+        remainingTime--;
+        countdownDisplay.innerText = formatTime(remainingTime);
+
+        if (remainingTime <= 0) {
+            clearInterval(countdownTimer);
+            document.getElementById('resend-feedback').innerText = "Ahora puedes reenviar el código.";
         }
-    }
+    }, 1000);
+}
 
-    // Validación del código en tiempo real
-    function validateCode(input) {
-        // Solo permite números y limita a 6 dígitos
-        input.value = input.value.replace(/\D/g, '').substring(0, 6);
-        const submitBtn = document.getElementById('submit-btn');
-        const isBlocked = document.getElementById('is_blocked').value === 'true';
-        submitBtn.disabled = input.value.length !== 6 || isBlocked;
-    }
-
-    // Manejar el reenvío de código
-    document.getElementById('resend-form')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('resend-btn');
-        const feedbackDiv = document.getElementById('resend-feedback');
-        
-        btn.disabled = true;
-        btn.innerHTML = 'Enviando... <i class="fas fa-spinner fa-spin ml-1"></i>';
-        
-        try {
-            const response = await fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    email: this.querySelector('input[name="email"]').value,
-                    secure_token: this.querySelector('input[name="secure_token"]').value
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok && data.success) {
-                feedbackDiv.innerHTML = '<p class="text-green-600 text-sm"><i class="fas fa-check-circle mr-1"></i> Nuevo código enviado</p>';
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                throw new Error(data.message || 'Error al reenviar el código');
-            }
-        } catch (error) {
-            feedbackDiv.innerHTML = `<p class="text-red-600 text-sm"><i class="fas fa-exclamation-circle mr-1"></i> ${error.message}</p>`;
-            btn.disabled = false;
-            btn.innerHTML = 'Reenviar código';
-            setTimeout(() => feedbackDiv.innerHTML = '', 3000);
-        }
-    });
-
-    // Iniciar el contador cuando la página cargue
-    document.addEventListener('DOMContentLoaded', startCountdown);
 </script>
 @endsection
