@@ -17,7 +17,7 @@
       text-lg placeholder-gray-900 p-2 my-2 focus:bg-white" placeholder="Correo electrónico" autofocus
       id="email" name="email">
 
-      <input type="password" class="border border-gray-200 rounded-md bg-gray-200 w-full
+      <input type="password" class="w-full px-3 py-2 border rounded-md rounded-md bg-gray-200 w-full
       text-lg placeholder-gray-900 p-2 my-2 focus:bg-white" placeholder="Contraseña"
       id="password" name="password">
 

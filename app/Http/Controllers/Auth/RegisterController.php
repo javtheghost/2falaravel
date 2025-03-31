@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
@@ -13,33 +16,38 @@ class RegisterController extends Controller
     {
         return view('auth.register', [
             'trialMode' => config('app.trial_mode'),
-            'allowedNumbers' => config('app.twilio_trial_numbers'),
-            'defaultNumber' => config('app.twilio_trial_numbers')[0] ?? null
+            'allowedNumbers' => config('app.twilio_trial_numbers')
         ]);
     }
 
     public function register()
     {
-        $validatedData = $this->validateUserData();
-
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-            'phone_number' => $this->formatPhoneNumber($validatedData['phone_number']),
-            'verification_token' => Hash::make(bin2hex(random_bytes(20))),
-            'verification_token_expires_at' => now()->addHours(24),
-        ]);
-
-        Log::info("Usuario registrado: {$user->email}");
-        return redirect()->route('login.index')->with('success', 'Registro exitoso. Por favor, inicia sesión.');
+        try {
+            $validatedData = $this->validateUserData();
+            
+            $user = $this->createUser($validatedData);
+            
+            Log::info("Nuevo usuario registrado", ['email' => $user->email]);
+            
+            return redirect()
+                ->route('login.index')
+                ->with('success', 'Registro exitoso. Por favor, inicia sesión.');
+                
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error("Error en registro: " . $e->getMessage());
+            return back()
+                ->with('error', 'Ocurrió un error durante el registro. Por favor, intenta nuevamente.')
+                ->withInput();
+        }
     }
 
-    private function validateUserData()
+    protected function validateUserData()
     {
         $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users',
             'password' => [
                 'required',
                 'confirmed',
@@ -47,32 +55,41 @@ class RegisterController extends Controller
                 'regex:/^(?=.*[0-9])(?=.*[^a-zA-Z0-9])/',
             ],
             'g-recaptcha-response' => 'required|captcha',
-            'phone_number' => ['required', 'string'],
+            'phone_number' => $this->getPhoneValidationRules(),
         ];
 
-        if (config('app.trial_mode')) {
-            $rules['phone_number'][] = function ($attribute, $value, $fail) {
-                if (!in_array($value, config('app.twilio_trial_numbers'))) {
-                    $fail('Solo se permiten registros con los siguientes números durante el periodo de prueba: '.implode(', ', config('app.twilio_trial_numbers')));
-                }
-            };
-        } else {
-            $rules['phone_number'] = array_merge($rules['phone_number'], [
-                'digits:10',
-                'regex:/^[0-9]{10}$/'
-            ]);
-        }
+        $messages = [
+            'password.regex' => 'La contraseña debe contener al menos un número y un carácter especial.',
+            'phone_number.in' => 'Número télefono permitido: :values',
+        ];
 
-        return request()->validate($rules, [
-            'g-recaptcha-response.required' => 'Por favor, completa el campo reCAPTCHA.',
-            'g-recaptcha-response.captcha' => 'El campo reCAPTCHA no es válido. Por favor, inténtalo de nuevo.',
-            'password.regex' => 'La contraseña debe tener al menos 8 caracteres, un número y un carácter especial.',
-            'phone_number.digits' => 'El número telefónico debe tener 10 dígitos.',
-            'phone_number.regex' => 'El número telefónico debe tener 10 dígitos numéricos.',
+        return Validator::make(request()->all(), $rules, $messages)->validate();
+    }
+
+    protected function getPhoneValidationRules()
+    {
+        $rules = ['required', 'string', 'digits:10'];
+        
+        if (config('app.trial_mode')) {
+            $rules[] = Rule::in(config('app.twilio_trial_numbers'));
+        }
+        
+        return $rules;
+    }
+
+    protected function createUser(array $data)
+    {
+        return User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'phone_number' => $this->formatPhoneNumber($data['phone_number']),
+            'verification_token' => Hash::make(bin2hex(random_bytes(20))),
+            'verification_token_expires_at' => now()->addHours(24),
         ]);
     }
 
-    private function formatPhoneNumber($number)
+    protected function formatPhoneNumber($number)
     {
         return '+52' . ltrim($number, '+');
     }
