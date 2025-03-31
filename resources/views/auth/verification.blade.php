@@ -3,6 +3,11 @@
 @section('title', 'Verificación')
 
 @section('content')
+<head>
+    <!-- Agregar CDN de SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
 <div class="flex justify-center items-center min-h-screen bg-gray-50">
     <div class="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
         <div class="text-center mb-8">
@@ -13,26 +18,26 @@
             </div>
         </div>
 
-        {{-- Mostrar mensajes de error o éxito --}}
-        @if(session('error'))
-        <div class="bg-red-50 p-4 rounded-lg mb-4">
-            <p class="text-red-600 font-medium">
-                <i class="fas fa-lock mr-2"></i>
-                {{ session('error') }}
-            </p>
-        </div>
+        {{-- Mostrar mensaje de error o éxito --}}
+        @if(session('error_message'))
+            <script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Demasiados intentos fallidos',
+                    text: 'Por favor, vuelve a loguearte e intenta nuevamente.',
+                    showConfirmButton: true, // Mostrar el botón de confirmar
+                    confirmButtonText: 'Aceptar', // Texto del botón
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.replace('{{ route('login.index') }}'); // Redirigir al login después de aceptar
+                    }
+                });
+            </script>
         @endif
 
-        @if(session('success'))
-        <div class="bg-green-50 p-4 rounded-lg mb-4">
-            <p class="text-green-600 font-medium">
-                <i class="fas fa-check-circle mr-2"></i>
-                {{ session('success') }}
-            </p>
-        </div>
-        @endif
-
-     
+        {{-- Formulario de verificación --}}
         <form method="POST" action="{{ route('auth.storeve') }}" id="verification-form">
             @csrf
             <input type="hidden" name="email" value="{{ $email }}">
@@ -61,6 +66,7 @@
             </button>
         </form>
 
+        {{-- Reenviar código --}}
         <div class="mt-8 text-center">
             @if($can_resend)
                 <form method="POST" action="{{ route('auth.resend') }}" id="resend-form">
@@ -74,11 +80,9 @@
             @else
                 <p class="text-sm text-gray-500">
                     Podrás reenviar el código en: <span id="resend-countdown">{{ floor($remaining_time/60) }}:{{ str_pad($remaining_time%60, 2, '0', STR_PAD_LEFT) }}</span>
-                    @if(isset($unlock_time))
-                        (a las {{ $unlock_time }})
-                    @endif
                 </p>
             @endif
+            
             <div id="resend-feedback" class="mt-2 text-sm"></div>
         </div>
 
@@ -90,27 +94,22 @@
 </div>
 
 <script>
-    // Función para formatear el tiempo (MM:SS)
-    function formatTime(totalSeconds) {
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    let remainingTime = document.getElementById('remaining_time').value;
-    let countdownDisplay = document.getElementById('resend-countdown');
-
-    if (remainingTime > 0) {
-    let countdownTimer = setInterval(() => {
-        remainingTime--;
-        countdownDisplay.innerText = formatTime(remainingTime);
-
-        if (remainingTime <= 0) {
-            clearInterval(countdownTimer);
-            document.getElementById('resend-feedback').innerText = "Ahora puedes reenviar el código.";
-        }
-    }, 1000);
-}
-
+    // Mostrar alerta de SweetAlert solo si hay un mensaje de error
+    @if(session('error_message'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Demasiados intentos fallidos',
+            text: 'Por favor, vuelve a loguearte e intenta nuevamente.',
+            showConfirmButton: true, // Mostrar el botón de confirmar
+            confirmButtonText: 'Aceptar', // Texto del botón
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.replace('{{ route('login.index') }}'); // Redirigir al login después de aceptar
+            }
+        });
+    @endif
 </script>
+
 @endsection
