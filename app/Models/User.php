@@ -35,7 +35,18 @@ class User extends Authenticatable
         return $this->codem_expires_at && now()->gt($this->codem_expires_at);
     }
 
-
+    public function requiresTwoFactorAuth()
+    {
+        // Lógica para determinar si requiere 2FA
+        return $this->two_factor_enabled || $this->codem !== null;
+    }
+    
+    public function isAccountLocked()
+    {
+        return $this->failed_attempts >= 3 && 
+               $this->codem_expires_at &&
+               $this->codem_expires_at->isFuture();
+    }
     // Método para invalidar el código
     public function invalidateCode()
     {
@@ -62,7 +73,11 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
+        
         'email_verified_at' => 'datetime',
+        'codem_expires_at' => 'datetime',
+        'is_verified' => 'boolean',
+        'phone_verified' => 'boolean'
     ];
 
 

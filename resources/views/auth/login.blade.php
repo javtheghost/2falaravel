@@ -42,12 +42,16 @@
 
       <button type="submit" class="rounded-md bg-blue-500 w-full text-lg
       text-white font-semibold p-2 my-3 hover:bg-blue-600">Iniciar</button>
-
+      @if ($errors->has('sms'))
+      <p class="border border-yellow-500 rounded-md bg-yellow-100 w-full text-yellow-800 p-2 my-2">
+          * {{ $errors->first('sms') }}
+      </p>
+  @endif
+  
+      
     </form>
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   @if(session('success'))
@@ -75,5 +79,4 @@
     });
   @endif
 </script>
-
 @endsection

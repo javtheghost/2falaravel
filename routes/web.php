@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\SmsController;
-use App\Http\Controllers\Auth\VeryfiController;
+use App\Http\Controllers\Auth\VerifyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
 });
 
 
+
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisterController::class, 'create'])->name('register.index');
     Route::post('/register', [RegisterController::class, 'register'])->name('register.store');
@@ -35,8 +36,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login.index');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
     
-    Route::get('/verification', [VeryfiController::class, 'create'])->name('auth.verification');
-    Route::post('/verification', [VeryfiController::class, 'store'])->name('auth.storeve');
+    Route::get('/verification', [VerifyController::class, 'create'])->name('auth.verification');
+    Route::post('/verification', [VerifyController::class, 'store'])->name('auth.storeve');
 
     Route::post('/resend-code', [SmsController::class, 'resendCode'])->name('auth.resend');
 });
