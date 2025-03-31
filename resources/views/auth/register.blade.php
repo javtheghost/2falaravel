@@ -35,22 +35,22 @@
                    placeholder="Confirmar contraseña" id="password_confirmation" name="password_confirmation" required>
 
                         <!-- Campo Teléfono -->
-            <div class="mt-4">
-                <input type="tel" 
-                    class="border border-gray-200 rounded-md bg-gray-200 w-full text-lg placeholder-gray-900 p-2 my-2 focus:bg-white" 
-                    placeholder="Número telefónico" 
-                    id="phone_number" 
-                    name="phone_number"
-                    value="{{ old('phone_number') }}"
-                    required
-                    pattern="[0-9]{10}"
-                    maxlength="10">
-
-                @error('phone_number')
-                    <p class="text-red-500 font-medium" mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
+                        <div class="mt-4">
+                            <input type="text" 
+                                class="border border-gray-200 rounded-md bg-gray-200 w-full text-lg placeholder-gray-900 p-2 my-2 focus:bg-white" 
+                                placeholder="Número telefónico" 
+                                id="phone_number" 
+                                name="phone_number"
+                                value="{{ old('phone_number') }}"
+                                required
+                                maxlength="10"
+                                oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+                        
+                            @error('phone_number')
+                                <p class="text-red-500 font-medium" mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        
 
 
             <!-- reCAPTCHA -->
