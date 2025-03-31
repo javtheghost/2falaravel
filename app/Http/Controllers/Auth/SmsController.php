@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Twilio\Rest\Client;
 use Illuminate\Support\Facades\Validator;
-
 class SmsController extends Controller
 {
     /**
@@ -16,6 +15,8 @@ class SmsController extends Controller
      * @param User $user
      * @return bool
      */
+
+     
     public function sendVerificationCode(User $user)
     {
         try {
@@ -116,3 +117,4 @@ class SmsController extends Controller
         Log::debug("SMS enviado a $to: " . substr($body, 0, 20) . "...");
     }
 }
+

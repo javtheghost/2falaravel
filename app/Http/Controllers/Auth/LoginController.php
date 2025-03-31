@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Auth\SmsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -22,36 +23,49 @@ class LoginController extends Controller
         Log::info('Acceso a página de inicio de sesión');
         return view('auth.login');
     }
-
     public function store(Request $request)
     {
         $this->validateLoginRequest($request);
-
+    
         try {
             $user = $this->getUserByEmail($request->email);
-
+    
             if (!$user || !$this->isValidPassword($request->password, $user->password)) {
                 return $this->handleFailedLogin();
             }
-
+    
             Log::info('Usuario validado: ' . $user->email);
-
-            // Generar y enviar código SMS directamente
+    
+            // Verificar si el código aún es válido
+            if ($user->code_expires_at && now()->lt($user->code_expires_at)) {
+                return back()->withErrors(['sms' => 'Ya has solicitado un código SMS recientemente. Inténtalo más tarde.']);
+            }
+    
+            // Generar nuevo código y enviarlo
+            $newCode = rand(100000, 999999); // Código de 6 dígitos
             $smsController = new SmsController();
-            if ($smsController->sendVerificationCode($user)) {
+            $smsResult = $smsController->sendVerificationCode($user, $newCode);
+    
+            if ($smsResult) {
+                // Guardar el nuevo código y tiempo de expiración en la base de datos
+                $user->update([
+                    'verification_code' => $newCode,
+                    'code_expires_at' => now()->addMinutes(5) // Expira en 5 minutos
+                ]);
+    
+                // Guardar email en sesión para verificación posterior
+                $request->session()->put('verifying_user', $user->id);
                 return redirect()->route('auth.verification', ['email' => $user->email]);
             }
-
-            throw new \Exception('Error al enviar el código de verificación');
-
-        } catch (ValidationException $e) {
-            Log::error('Error de validación: ' . $e->getMessage());
-            throw $e;
+    
+            throw new \Exception('No se pudo enviar el código de verificación');
+    
         } catch (\Exception $e) {
             Log::error('Error en login: ' . $e->getMessage());
             return back()->withErrors(['message' => $e->getMessage()]);
         }
     }
+    
 
     private function validateLoginRequest(Request $request)
     {
@@ -78,7 +92,7 @@ class LoginController extends Controller
     private function handleFailedLogin()
     {
         Log::warning('Intento de inicio de sesión fallido');
-        throw new \Exception('Credenciales incorrectas');
+        return back()->withErrors(['message' => 'Credenciales incorrectas']);
     }
 
     public function logout(Request $request)

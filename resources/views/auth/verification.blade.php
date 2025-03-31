@@ -3,11 +3,6 @@
 @section('title', 'Verificación')
 
 @section('content')
-<head>
-    <!-- Agregar CDN de SweetAlert -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-
 <div class="flex justify-center items-center min-h-screen bg-gray-50">
     <div class="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
         <div class="text-center mb-8">
@@ -20,21 +15,10 @@
 
         {{-- Mostrar mensaje de error o éxito --}}
         @if(session('error_message'))
-            <script>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Demasiados intentos fallidos',
-                    text: 'Por favor, vuelve a loguearte e intenta nuevamente.',
-                    showConfirmButton: true, // Mostrar el botón de confirmar
-                    confirmButtonText: 'Aceptar', // Texto del botón
-                    allowOutsideClick: false,
-                    allowEscapeKey: false
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.replace('{{ route('login.index') }}'); // Redirigir al login después de aceptar
-                    }
-                });
-            </script>
+            <div class="text-center text-red-600 mb-4">
+                <p class="text-lg font-semibold">Demasiados intentos fallidos</p>
+                <p>Por favor, vuelve a loguearte e intenta nuevamente.</p>
+            </div>
         @endif
 
         {{-- Formulario de verificación --}}
@@ -66,25 +50,15 @@
             </button>
         </form>
 
-        {{-- Reenviar código --}}
-        <div class="mt-8 text-center">
-            @if($can_resend)
-                <form method="POST" action="{{ route('auth.resend') }}" id="resend-form">
-                    @csrf
-                    <input type="hidden" name="email" value="{{ $email }}">
-                    <input type="hidden" name="secure_token" value="{{ encrypt(time()) }}">
-                    <button type="submit" id="resend-btn" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                        Reenviar código
-                    </button>
-                </form>
-            @else
-                <p class="text-sm text-gray-500">
-                    Podrás reenviar el código en: <span id="resend-countdown">{{ floor($remaining_time/60) }}:{{ str_pad($remaining_time%60, 2, '0', STR_PAD_LEFT) }}</span>
-                </p>
-            @endif
-            
-            <div id="resend-feedback" class="mt-2 text-sm"></div>
-        </div>
+        {{-- Mostrar botón de redirección si el usuario está bloqueado --}}
+        @if($is_blocked)
+            <div class="mt-4 text-center">
+                <p class="text-red-600">Has agotado los intentos, por favor vuelve a iniciar sesión.</p>
+                <a href="{{ route('login.index') }}" class="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Iniciar sesión
+                </a>
+            </div>
+        @endif
 
         <div class="mt-8 pt-6 border-t border-gray-200 text-center">
             <p class="text-xs text-gray-500">¿Problemas para verificar? <a href="#" class="text-blue-600 hover:underline">Contactar soporte</a></p>
@@ -92,24 +66,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    // Mostrar alerta de SweetAlert solo si hay un mensaje de error
-    @if(session('error_message'))
-        Swal.fire({
-            icon: 'error',
-            title: 'Demasiados intentos fallidos',
-            text: 'Por favor, vuelve a loguearte e intenta nuevamente.',
-            showConfirmButton: true, // Mostrar el botón de confirmar
-            confirmButtonText: 'Aceptar', // Texto del botón
-            allowOutsideClick: false,
-            allowEscapeKey: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.replace('{{ route('login.index') }}'); // Redirigir al login después de aceptar
-            }
-        });
-    @endif
-</script>
-
 @endsection

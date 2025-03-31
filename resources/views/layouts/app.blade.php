@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>@yield('title') -"2 Factores"</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Tailwind CSS Link -->
     <link rel="stylesheet"
@@ -47,9 +48,11 @@
 
     </nav>
     @yield('content')
+    
 <footer class="bg-white text-dark text-center py-4 text-lg font-semibold">
         Servidor actual: 2
     </footer>
+
 
   </body>
 </html>
