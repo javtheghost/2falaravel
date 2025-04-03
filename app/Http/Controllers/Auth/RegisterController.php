@@ -17,11 +17,11 @@ class RegisterController extends Controller
             'defaultNumber' => config('app.twilio_trial_numbers')[0] ?? null,  // Número predeterminado, si existe
         ]);
     }
-    
+
     public function register()
     {
         $validatedData = $this->validateUserData();
-    
+
         // Crear el usuario con el número telefónico formateado
         $user = User::create([
             'name' => $validatedData['name'],
@@ -31,7 +31,7 @@ class RegisterController extends Controller
             'verification_token' => Hash::make(bin2hex(random_bytes(20))),
             'verification_token_expires_at' => now()->addHours(24),
         ]);
-    
+
         Log::info("Usuario registrado: {$user->email}");
         return redirect()->route('login.index')->with('success', 'Registro exitoso. Por favor, inicia sesión.');
     }
@@ -53,11 +53,12 @@ class RegisterController extends Controller
                 'confirmed',
                 'min:8',
                 'regex:/^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).*$/', // Al menos un número y un carácter especial
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/', // Al menos una minúscula, una mayúscula, un número y un carácter especial
             ],
             'g-recaptcha-response' => 'required|captcha',
             'phone_number' => ['required', 'string'],
         ];
-    
+
         if (config('app.trial_mode')) {
             // Validación para que solo se acepten números específicos en modo prueba
             $rules['phone_number'][] = function ($attribute, $value, $fail) {
@@ -72,11 +73,11 @@ class RegisterController extends Controller
                 'regex:/^[0-9]{10}$/', // Expresión regular para asegurar que el número solo tenga 10 dígitos numéricos
             ]);
         }
-    
+
         return request()->validate($rules, [
             'g-recaptcha-response.required' => 'Por favor, completa el campo reCAPTCHA.',
             'g-recaptcha-response.captcha' => 'El campo reCAPTCHA no es válido. Por favor, inténtalo de nuevo.',
-            'password.regex' => 'La contraseña debe tener al menos 8 caracteres, un número y un carácter especial.',
+            'password.regex' => 'La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial.',
             'password.confirmed' => 'La confirmación de la contraseña no coincide.',
             'email.regex' => 'El correo electrónico debe tener un formato válido (ej. ejemplo@dominio.com).',
             'email.unique' => 'Este correo electrónico ya está registrado. Intenta con otro.',

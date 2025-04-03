@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class VerifyController extends Controller
-{ public function create(Request $request)
+{
+    public function create(Request $request)
     {
         $user = User::where('email', $request->email)->firstOrFail();
 
@@ -45,7 +46,7 @@ class VerifyController extends Controller
             'verification_code' => 'required|numeric|digits:6',
             'email' => 'required|email|exists:users,email'
         ]);
-    
+
         $user = User::where('email', $request->email)->firstOrFail();
 
         if ($user->hasExpiredCode()) {
@@ -58,14 +59,12 @@ class VerifyController extends Controller
             $remainingTime = max(0, min($user->codem_expires_at->diffInSeconds(now()), 300));
             Log::warning("Intentos fallidos para usuario {$user->email} - Bloqueado por {$remainingTime} segundos");
             return back()->withErrors(['verification_code' => 'Debes esperar a que expire el código actual.']);
-
-            
         }
 
         if (!Hash::check($request->verification_code, $user->codem)) {
             $user->increment('failed_attempts');
             Log::error("Código incorrecto para usuario {$user->email} - Intentos restantes: " . (3 - $user->failed_attempts));
-            return back()->withErrors(['verification_code' => 'Código incorrecto. Intentos restantes: '. (3 - $user->failed_attempts)]);
+            return back()->withErrors(['verification_code' => 'Código incorrecto. Intentos restantes: ' . (3 - $user->failed_attempts)]);
         }
 
         $user->update([
@@ -75,7 +74,7 @@ class VerifyController extends Controller
             'codem_expires_at' => null,
             'failed_attempts' => 0
         ]);
-    
+
         Log::info("Usuario verificado correctamente: {$user->email}");
         Auth::login($user);
         return redirect()->route('home')->with('success', '¡Bienvenido!');

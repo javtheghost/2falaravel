@@ -57,17 +57,12 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array(
-            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-            PDO::MYSQL_ATTR_SSL_KEY => '/opt/lampp/etc/mysql/ssl/server-key.pem',
-            PDO::MYSQL_ATTR_SSL_CERT => '/opt/lampp/etc/mysql/ssl/server-cert.pem',
-            PDO::MYSQL_ATTR_SSL_CA => '/opt/lampp/etc/mysql/ssl/ca-cert.pem',
-            ) : [],
+          
+
 
 
         ],
-
+        /*
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
@@ -76,6 +71,34 @@ return [
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+        */
+        'pgsql' => [
+            'driver' => 'pgsql',
+            'read' => [
+                'host' => [
+                    env('DB_READ_HOST', '127.0.0.1'), // Host de la base de datos esclava
+                ],
+                'port' => env('DB_PORT', '5432'),
+                'database' => env('DB_DATABASE', 'forge'),
+                'username' => env('DB_USERNAME', 'forge'),
+                'password' => env('DB_PASSWORD', ''),
+            ],
+            'write' => [
+                'host' => [
+                    env('DB_WRITE_HOST', '127.0.0.1'), // Host de la base de datos maestra
+                ],
+                'port' => env('DB_PORT', '5432'),
+                'database' => env('DB_DATABASE', 'forge'),
+                'username' => env('DB_USERNAME', 'forge'),
+                'password' => env('DB_PASSWORD', ''),
+            ],
+            'sticky' => true, // Opcional: permite lecturas inmediatas después de una escritura
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
@@ -130,7 +153,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
         ],
 
         'default' => [

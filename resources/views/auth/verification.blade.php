@@ -38,13 +38,13 @@
                     inputmode="numeric" pattern="\d{6}" maxlength="6" required autofocus
                     {{ $is_blocked ? 'disabled' : '' }}
                     oninput="validateCode(this)">
-                
+
                 @error('verification_code')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
 
-            <button type="submit" id="submit-btn" class="w-full py-3 px-4 {{ $is_blocked ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700' }} text-white font-medium rounded-md transition duration-200" 
+            <button type="submit" id="submit-btn" class="w-full py-3 px-4 {{ $is_blocked ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700' }} text-white font-medium rounded-md transition duration-200"
                 {{ $is_blocked ? 'disabled' : '' }}>
                 Continuar
             </button>
